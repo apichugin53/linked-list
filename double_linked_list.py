@@ -1,191 +1,162 @@
-from typing import Optional
-
-
 class Node:
-    def __init__(self, data):
+    def __init__(self, data, next_node=None, prev_node=None):
         self.data = data
-        self.next = None
-        self.prev = None
+        self.next_node = next_node
+        self.prev_node = prev_node
 
 
 class LinkedList:
+
     def __init__(self):
         self.head = None
         self.tail = None
 
-    # Пример существующих базовых методов, реализованных ранее
-    def append(self, data):
+    def insert_at_head(self, data):
         new_node = Node(data)
-        
-        if not self.head:
-            self.head = new_node
+        if self.head is None:
             self.tail = new_node
         else:
-            current = self.tail
-            current.next = new_node
-            new_node.prev = current
-            self.tail = new_node
+            new_node.next_node = self.head  # работа с текущей головой
+            self.head.prev_node = new_node  # работа с текущей головой
+        self.head = new_node
+        print(f"Теперь в голове узел с данными {self.head.data}")
 
-    def prepend(self, data):
+    def insert_at_tail(self, data):
         new_node = Node(data)
-    
-        if not self.head:
+        if self.head is None:
+            # return self.insert_at_head(data)
             self.head = new_node
-            self.tail = new_node
         else:
-            current = self.head
-            current.prev = new_node
-            new_node.next = current
-            self.head = new_node
+            self.tail.next_node = new_node
+            new_node.prev_node = self.tail
+        self.tail = new_node
+        print(f"Теперь в хвосте узел с данными {self.tail.data}")
 
-    def delete_first(self):
-        if not self.head:
-            return
-            
-        temp = self.head
-        if self.head == self.tail:
-            self.head = None
-            self.tail = None
-        else:
-            self.head = temp.next
-            self.head.prev = None
-        del temp
+    def remove_from_head(self):
+        removed_node = self.head
+        self.head = self.head.next_node
+        self.head.prev_node = None
+        print(f"Были удалены данные {removed_node.data} из головы списка.\nТеперь голова списка {self.head.data}")
+        return removed_node.data
 
-    def delete_last(self):
-        if not self.tail:
-            return
-            
-        temp = self.tail
-        if self.head == self.tail:
-            self.head = None
-            self.tail = None
-        else:
-            self.tail = temp.prev
-            self.tail.next = None
-        del temp
+    def remove_from_tail(self):
+        removed_node = self.tail
+        self.tail = self.tail.prev_node
+        self.tail.next_node = None
+        print(f"Были удалены данные {removed_node.data} из хвоста списка.\nТеперь хвост списка {self.tail.data}")
+        return removed_node.data
+
+    def print_ll_from_head(self):
+        current_node = self.head
+        while current_node is not None:
+            print(current_node.data)
+            current_node = current_node.next_node
+        print("Список выведен с начала")
 
 
-# Расширенный класс DoubleLinkedList, наследуемый от LinkedList
-class DoubleLinkedList(LinkedList):
+class DerivedLinkedList(LinkedList):
+
     def print_ll_from_tail(self):
-        """ Печать элементов от хвоста к началу """
-        node = self.tail
-        while node is not None:
-            print(node.data, end=" ")
-            node = node.prev
-        print()
+        current_node = self.tail
+        while current_node is not None:
+            print(current_node.data)
+            current_node = current_node.prev_node
+        print("Список выведен с конца")
 
-    def insert_at_index(self, index: int, data):
-        """ Добавляет элемент по указанному индексу (если индекс больше длины списка, добавляем в конец)."""
-        if index <= 0 or not isinstance(index, int):   # вставляем в начало списка
-            self.prepend(data)
+    def insert_at_index(self, index, data):
+        if index == 0:
+            self.insert_at_head(data)
             return
-        
-        new_node = Node(data)
-        position = 0
-        current = self.head
-        
-        while current and position < index - 1:
-            current = current.next
-            position += 1
-        
-        if current is None:  # Индекс превышает размер списка, добавляем в конец
-            self.append(data)
-        elif current.next is None:  # Последняя позиция перед концом списка
-            current.next = new_node
-            new_node.prev = current
-            self.tail = new_node
-        else:                   # Вставка между двумя узлами
-            next_node = current.next
-            current.next = new_node
-            new_node.prev = current
-            new_node.next = next_node
-            next_node.prev = new_node
 
-    def remove_node_index(self, index: int):
-        """ Удаление узла по индексу """
-        if index < 0 or not isinstance(index, int):
-            raise ValueError("Индекс должен быть неотрицательным целым числом")
-        
-        position = 0
-        current = self.head
-        
-        while current and position != index:
-            current = current.next
-            position += 1
-        
-        if current is None:
-            raise IndexError(f"Узел с указанным индексом {index} отсутствует.")
-        
-        prev_node = current.prev
-        next_node = current.next
-        
-        if prev_node:
-            prev_node.next = next_node
+        if self.head is None:
+            raise IndexError(f"Выход индекса {index} за границу допустимого диапазона")
+
+        current_node = self.head
+        for i in range(index):
+            current_node = current_node.next_node
+            if current_node is None and i < index - 1:
+                raise IndexError(f"Выход индекса {index} за границу допустимого диапазона")
+
+        if current_node is None:
+            self.insert_at_tail(data)
         else:
-            self.head = next_node
-        
-        if next_node:
-            next_node.prev = prev_node
-        else:
-            self.tail = prev_node
-        
-        del current
+            new_node = Node(data)
+            prev_node = current_node.prev_node
+            new_node.next_node = current_node
+            new_node.prev_node = prev_node
+            prev_node.next_node = new_node
+            current_node.prev_node = new_node
+            print(f"Теперь в позиции {index} узел с данными {new_node.data}")
+
+    def remove_node_index(self, index):
+        if self.head is None:
+            raise IndexError(f"Выход индекса {index} за границу допустимого диапазона")
+
+        if index == 0:
+            return self.remove_from_head()
+
+        removed_node = self.head
+        for i in range(index):
+            removed_node = removed_node.next_node
+            if removed_node is None:
+                raise IndexError(f"Выход индекса {index} за границу допустимого диапазона")
+
+        next_node = removed_node.next_node
+        if next_node is None:
+            return self.remove_from_tail()
+
+        removed_node.prev_node.next_node = next_node
+        next_node.prev_node = removed_node.prev_node
+        removed_node.prev_node = removed_node.next_node = None
+        print(f"Были удалены данные {removed_node.data} из позиции {index} списка.")
+        print(f"Теперь в позиции {index} списка {next_node.data}")
+        return removed_node.data
 
     def remove_node_data(self, data):
-        """ Удаляем первый узел с указанными данными """
-        current = self.head
-        
-        while current:
-            if current.data == data:
-                prev_node = current.prev
-                next_node = current.next
-                
-                if prev_node:
-                    prev_node.next = next_node
-                else:
-                    self.head = next_node
-                    
-                if next_node:
-                    next_node.prev = prev_node
-                else:
-                    self.tail = prev_node
-                
-                del current
-                break
-            
-            current = current.next
+        removed_node = self.head
+        index = 0  # для наглядности вывода позиции, где был найден искомый элемент
+        while removed_node is not None:
+            if removed_node.data == data:
+                next_node = removed_node.next_node
+                if next_node is None:
+                    return self.remove_from_tail()
+                prev_node = removed_node.prev_node
+                if prev_node is None:
+                    return self.remove_from_head()
+                prev_node.next_node = next_node
+                next_node.prev_node = prev_node
+                removed_node.prev_node = removed_node.next_node = None
+                print(f"Были удалены данные {removed_node.data} из позиции {index} списка.")
+                return removed_node.data
+            removed_node = removed_node.next_node
+            index += 1
+        return None
 
     def len_ll(self):
-        """ Возвращаем количество узлов в списке """
-        count = 0
-        current = self.head
-        while current:
-            count += 1
-            current = current.next
-        return count
+        current_node = self.head
+        index = 0
+        while current_node is not None:
+            index += 1
+            current_node = current_node.next_node
+        return index
 
     def contains_from_head(self, data):
-        """ Проверяет наличие указанного значения начиная с головы списка """
-        current = self.head
-        while current:
-            if current.data == data:
+        current_node = self.head
+        while current_node is not None:
+            if current_node.data == data:
                 return True
-            current = current.next
+            current_node = current_node.next_node
         return False
 
     def contains_from_tail(self, data):
-        """ Проверяет наличие указанного значения начиная с хвоста списка """
-        current = self.tail
-        while current:
-            if current.data == data:
+        current_node = self.tail
+        while current_node is not None:
+            if current_node.data == data:
                 return True
-            current = current.prev
+            current_node = current_node.prev_node
         return False
 
-    def contains_from(self, data, from_start=True):
-        """ Поиск данных, начиная с выбранного направления (True - с головы, False - с хвоста) """
-        if from_start:
+    def contains_from(self, data, from_head = True):
+        if from_head:
             return self.contains_from_head(data)
-        else:
-            return self.contains_from_tail(data)
+        return self.contains_from_tail(data)
